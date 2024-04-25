@@ -1,0 +1,11 @@
+{
+  "name": "prototypes",
+  "private": true,
+  "scripts": {
+    "check": "biome check .",
+    "check:apply": "biome check --apply ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.7.1"
+  }
+}
