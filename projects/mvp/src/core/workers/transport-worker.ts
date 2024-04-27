@@ -5,8 +5,6 @@ const transport = createTransport();
 console.log("worker started");
 
 self.onmessage = async (event) => {
-  console.log("worker received message", event);
-
   const { data } = event;
 
   if (data.type === "play") {
@@ -22,18 +20,18 @@ self.onmessage = async (event) => {
   }
 
   if (data.type === "getPlayingState") {
-    const state = transport.getPlayingState();
-    self.postMessage({ type: "getPlayingState", state });
+    const playingState = transport.getPlayingState();
+    self.postMessage({ type: "getPlayingState", playingState });
   }
 
   if (data.type === "getCurrentTicks") {
-    const ticks = transport.getCurrentTicks();
-    self.postMessage({ type: "getCurrentTicks", ticks });
+    const currentTicks = transport.getCurrentTicks();
+    self.postMessage({ type: "getCurrentTicks", currentTicks });
   }
 
   if (data.type === "getCurrentSeconds") {
-    const seconds = transport.getCurrentSeconds();
-    self.postMessage({ type: "getCurrentSeconds", seconds });
+    const currentSeconds = transport.getCurrentSeconds();
+    self.postMessage({ type: "getCurrentSeconds", currentSeconds });
   }
 
   if (data.type === "getBpm") {

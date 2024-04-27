@@ -1,10 +1,16 @@
-import type { Transport } from "../transport";
+import type { PlayingState, Transport } from "../transport";
 import type { BPM, PPQ, Seconds, Ticks } from "../types";
 import Worker from "./transport-worker?worker";
 
 export type WorkerTransport = {
   [K in keyof Transport]: Transport[K] extends (...args: infer Args) => infer R
-    ? (...args: Args) => R extends void ? R : Promise<R>
+    ? (
+        ...args: Args
+      ) => R extends void
+        ? R
+        : R extends PlayingState
+          ? Promise<PlayingState>
+          : Promise<R>
     : never;
 };
 
@@ -24,11 +30,16 @@ class WorkerTransportImpl implements WorkerTransport {
   }
 
   getPlayingState() {
-    throw new Error("Method not implemented.");
+    this.worker.postMessage({ type: "getPlayingState" });
 
-    // biome-ignore lint/correctness/noUnreachable: <explanation>
-    return new Promise<"playing">((resolve) => {
-      resolve("playing");
+    return new Promise<PlayingState>((resolve) => {
+      this.worker.onmessage = (event) => {
+        const { data } = event;
+
+        if (data.type === "getPlayingState") {
+          resolve(data.playingState as PlayingState);
+        }
+      };
     });
   }
 
@@ -37,12 +48,10 @@ class WorkerTransportImpl implements WorkerTransport {
 
     return new Promise<Ticks>((resolve) => {
       this.worker.onmessage = (event) => {
-        console.log("worker received message", event);
-
         const { data } = event;
 
         if (data.type === "getCurrentTicks") {
-          resolve(data.ticks as Ticks);
+          resolve(data.currentTicks as Ticks);
         }
       };
     });
@@ -53,12 +62,10 @@ class WorkerTransportImpl implements WorkerTransport {
 
     return new Promise<Seconds>((resolve) => {
       this.worker.onmessage = (event) => {
-        console.log("worker received message", event);
-
         const { data } = event;
 
         if (data.type === "getCurrentTicks") {
-          resolve(data.seconds as Seconds);
+          resolve(data.currentSeconds as Seconds);
         }
       };
     });
@@ -69,8 +76,6 @@ class WorkerTransportImpl implements WorkerTransport {
 
     return new Promise<BPM>((resolve) => {
       this.worker.onmessage = (event) => {
-        console.log("worker received message", event);
-
         const { data } = event;
 
         if (data.type === "getBpm") {
@@ -89,8 +94,6 @@ class WorkerTransportImpl implements WorkerTransport {
 
     return new Promise<PPQ>((resolve) => {
       this.worker.onmessage = (event) => {
-        console.log("worker received message", event);
-
         const { data } = event;
 
         if (data.type === "getPpq") {
