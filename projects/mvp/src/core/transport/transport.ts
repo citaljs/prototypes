@@ -63,7 +63,7 @@ class TransportImpl implements Transport {
 
     this.playingState = "paused";
 
-    if (!this.intervalId) {
+    if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = undefined;
     }
@@ -77,7 +77,7 @@ class TransportImpl implements Transport {
 
     this.playingState = "stopped";
 
-    if (!this.intervalId) {
+    if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = undefined;
     }
