@@ -49,6 +49,7 @@ class TransportImpl implements Transport {
     }
 
     this.playingState = "playing";
+    this.prevTime = new Milliseconds(performance.now());
 
     this.intervalId = setInterval(() => {
       this.updateTime();
