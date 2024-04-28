@@ -23,7 +23,7 @@ class TransportImpl implements Transport {
   private ppq: PPQ = new PPQ(960);
   private playingState: PlayingState = "stopped";
   private prevTime?: Milliseconds = undefined;
-  private intervalId?: number = undefined;
+  private intervalId?: NodeJS.Timeout = undefined;
 
   private updateTime() {
     const timestamp = new Milliseconds(performance.now());
