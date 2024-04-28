@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import processorRaw from "./core/synthesizers/generated/sine-wave-synthesizer-processor.js?raw";
+import { SineWaveSynthesizerNode } from "./core/synthesizers/sine-wave-synthesizer-node";
 import type { PlayingState } from "./core/transport";
 import { BPM, PPQ, type Seconds, type Ticks } from "./core/types";
 import { createWorkerTransport } from "./core/workers/transport";
+
+const processorBlob = new Blob([processorRaw], {
+  type: "application/javascript; charset=utf-8",
+});
 
 const transport = createWorkerTransport();
 
@@ -20,6 +26,17 @@ function useAnimationFrame(animationHandler: () => void) {
 }
 
 function App() {
+  const [synthNode, setSynthNode] = useState<AudioWorkletNode>();
+
+  const setupSynthNode = async () => {
+    const audioContext = new AudioContext();
+    const processorUrl = URL.createObjectURL(processorBlob);
+    await audioContext.audioWorklet.addModule(processorUrl);
+    const node = new SineWaveSynthesizerNode(audioContext);
+    node.connect(audioContext.destination);
+    setSynthNode(node);
+  };
+
   const [playingState, setPlayingState] = useState<PlayingState>();
   const [currentTicks, setCurrentTicks] = useState<Ticks>();
   const [currentSeconds, setCurrentSeconds] = useState<Seconds>();
@@ -53,6 +70,11 @@ function App() {
   return (
     <>
       <h1>MVP</h1>
+      <div>
+        <button type="button" onClick={setupSynthNode} disabled={!!synthNode}>
+          Setup Synth Node
+        </button>
+      </div>
       <div>
         <button type="button" onClick={play}>
           Play
