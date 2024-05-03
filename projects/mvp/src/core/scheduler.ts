@@ -1,8 +1,9 @@
-import type { Note, NoteStore } from "./note";
+import { NoteOff, NoteOn, type NoteStore } from "./note";
 import type { Transport } from "./transport";
 
 export interface NoteObserver {
-  processNote(note: Note): void;
+  noteOn(noteOn: NoteOn): void;
+  noteOff(noteOff: NoteOff): void;
 }
 
 export class Scheduler {
@@ -39,35 +40,60 @@ export class Scheduler {
     this.observers = this.observers.filter((obs) => obs !== observer);
   }
 
-  private notifyObservers(note: Note) {
+  private notifyNoteOn(noteOn: NoteOn) {
     for (const observer of this.observers) {
-      observer.processNote(note);
+      observer.noteOn(noteOn);
+    }
+  }
+
+  private notifyNoteOff(noteOff: NoteOff) {
+    for (const observer of this.observers) {
+      observer.noteOff(noteOff);
     }
   }
 
   private scheduleNotes(currentTicks: number) {
-    const notesToSchedule = this.noteStore
+    const scheduledNoteOnEvents = this.noteStore
       .getNotes()
       .filter(
         (note) =>
-          note.ticks >= this.lastScheduledTicks &&
-          note.ticks < currentTicks + this.lookahead,
+          note.startTicks >= this.lastScheduledTicks &&
+          note.startTicks < currentTicks + this.lookahead,
+      )
+      .map(
+        (note) =>
+          new NoteOn(note.id, note.startTicks, note.pitch, note.velocity),
       );
 
-    this.lastScheduledTicks = currentTicks + this.lookahead;
+    scheduledNoteOnEvents.sort((a, b) => a.ticks - b.ticks);
+    console.debug("Scheduled note on events: %o", scheduledNoteOnEvents);
 
-    if (notesToSchedule.length === 0) {
-      return;
-    }
-
-    notesToSchedule.sort((a, b) => a.ticks - b.ticks);
-    console.debug("Scheduled notes: %o", notesToSchedule);
-
-    while (notesToSchedule.length > 0) {
-      const note = notesToSchedule.shift();
-      if (note) {
-        this.notifyObservers(note);
+    while (scheduledNoteOnEvents.length > 0) {
+      const noteOn = scheduledNoteOnEvents.shift();
+      if (noteOn) {
+        this.notifyNoteOn(noteOn);
       }
     }
+
+    const scheduledNoteOffEvents = this.noteStore
+      .getNotes()
+      .filter(
+        (note) =>
+          note.endTicks >= this.lastScheduledTicks &&
+          note.endTicks < currentTicks + this.lookahead,
+      )
+      .map((note) => new NoteOff(note.id, note.endTicks));
+
+    scheduledNoteOffEvents.sort((a, b) => a.ticks - b.ticks);
+    console.debug("Scheduled note off events: %o", scheduledNoteOffEvents);
+
+    while (scheduledNoteOffEvents.length > 0) {
+      const noteOff = scheduledNoteOffEvents.shift();
+      if (noteOff) {
+        this.notifyNoteOff(noteOff);
+      }
+    }
+
+    this.lastScheduledTicks = currentTicks + this.lookahead;
   }
 }

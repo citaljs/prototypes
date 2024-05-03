@@ -1,9 +1,30 @@
 export class Note {
   constructor(
-    public ticks: number,
+    public id: string,
+    public startTicks: number,
     public durationTicks: number,
     public pitch: number,
     public velocity: number,
+  ) {}
+
+  get endTicks() {
+    return this.startTicks + this.durationTicks;
+  }
+}
+
+export class NoteOn {
+  constructor(
+    public noteId: string,
+    public ticks: number,
+    public pitch: number,
+    public velocity: number,
+  ) {}
+}
+
+export class NoteOff {
+  constructor(
+    public noteId: string,
+    public ticks: number,
   ) {}
 }
 

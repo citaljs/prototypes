@@ -7,8 +7,5 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.7.1"
-  },
-  "dependencies": {
-    "sf2-synth-audio-worklet": "^0.0.10"
   }
 }
