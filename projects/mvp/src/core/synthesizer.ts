@@ -1,10 +1,25 @@
 import type { NoteOff, NoteOn } from "./note";
-import type { NoteObserver } from "./scheduler";
+import type { SchedulerObserver } from "./scheduler";
 
-export class SineSynthesizer implements NoteObserver {
+export class SineSynthesizer implements SchedulerObserver {
   private oscillators: Map<string, OscillatorNode> = new Map();
 
   constructor(private audioContext: AudioContext) {}
+
+  private clearAllOscillators() {
+    for (const oscillator of this.oscillators.values()) {
+      oscillator.stop();
+    }
+    this.oscillators.clear();
+  }
+
+  pause() {
+    this.clearAllOscillators();
+  }
+
+  stop() {
+    this.clearAllOscillators();
+  }
 
   noteOn(noteOn: NoteOn) {
     const oscillator = this.audioContext.createOscillator();

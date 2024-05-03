@@ -1,13 +1,15 @@
 import { NoteOff, NoteOn, type NoteStore } from "./note";
 import type { Transport } from "./transport";
 
-export interface NoteObserver {
+export interface SchedulerObserver {
+  pause(): void;
+  stop(): void;
   noteOn(noteOn: NoteOn): void;
   noteOff(noteOff: NoteOff): void;
 }
 
 export class Scheduler {
-  private observers: NoteObserver[] = [];
+  private observers: SchedulerObserver[] = [];
   private lookahead = 200;
   private lastScheduledTicks = 0;
 
@@ -15,8 +17,13 @@ export class Scheduler {
     transport: Transport,
     private noteStore: NoteStore,
   ) {
+    transport.on("pause", () => {
+      this.notifyPause();
+    });
+
     transport.on("stop", () => {
       this.resetLastScheduledTime();
+      this.notifyStop();
     });
 
     transport.on("positionChanged", (currentTicks) => {
@@ -28,16 +35,28 @@ export class Scheduler {
     this.lastScheduledTicks = 0;
   }
 
-  addObserver(observer: NoteObserver) {
+  addObserver(observer: SchedulerObserver) {
     console.debug("Adding observer");
 
     this.observers.push(observer);
   }
 
-  removeObserver(observer: NoteObserver) {
+  removeObserver(observer: SchedulerObserver) {
     console.debug("Removing observer");
 
     this.observers = this.observers.filter((obs) => obs !== observer);
+  }
+
+  private notifyPause() {
+    for (const observer of this.observers) {
+      observer.pause();
+    }
+  }
+
+  private notifyStop() {
+    for (const observer of this.observers) {
+      observer.stop();
+    }
   }
 
   private notifyNoteOn(noteOn: NoteOn) {
