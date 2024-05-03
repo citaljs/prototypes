@@ -1,126 +1,38 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import processorRaw from "./core/synthesizers/generated/sine-wave-synthesizer-processor.js?raw";
-import { SineWaveSynthesizerNode } from "./core/synthesizers/sine-wave-synthesizer-node";
-import type { PlayingState } from "./core/transport";
-import { BPM, PPQ, type Seconds, type Ticks } from "./core/types";
-import { createWorkerTransport } from "./core/workers/transport";
+import { Note, NoteStore } from "./core/note";
+import { type NoteObserver, Scheduler } from "./core/scheduler";
+import { Transport } from "./core/transport";
 
-const processorBlob = new Blob([processorRaw], {
-  type: "application/javascript; charset=utf-8",
-});
-
-const transport = createWorkerTransport();
-
-function useAnimationFrame(animationHandler: () => void) {
-  const frame = useRef(0);
-
-  const animate = useCallback(() => {
-    animationHandler();
-    frame.current = requestAnimationFrame(animate);
-  }, [animationHandler]);
-
-  useEffect(() => {
-    frame.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frame.current);
-  }, [animate]);
+class Synthesizer implements NoteObserver {
+  processNote(note: Note) {
+    console.debug("Playing note %o", note);
+  }
 }
 
+const transport = new Transport(120, 480);
+const noteStore = new NoteStore();
+const scheduler = new Scheduler(transport, noteStore);
+const synthesizer = new Synthesizer();
+
+scheduler.addObserver(synthesizer);
+
+noteStore.addNote(new Note(480, 1, 60, 100));
+noteStore.addNote(new Note(960, 1, 64, 100));
+
 function App() {
-  const [synthNode, setSynthNode] = useState<AudioWorkletNode>();
-
-  const setupSynthNode = async () => {
-    const audioContext = new AudioContext();
-    const processorUrl = URL.createObjectURL(processorBlob);
-    await audioContext.audioWorklet.addModule(processorUrl);
-    const node = new SineWaveSynthesizerNode(audioContext);
-    node.connect(audioContext.destination);
-    setSynthNode(node);
-  };
-
-  const [playingState, setPlayingState] = useState<PlayingState>();
-  const [currentTicks, setCurrentTicks] = useState<Ticks>();
-  const [currentSeconds, setCurrentSeconds] = useState<Seconds>();
-  const [bpm, setBpm_] = useState<BPM>();
-  const [ppq, setPpq_] = useState<PPQ>();
-  const [bpmInput, setBpmInput] = useState("120");
-  const [ppqInput, setPpqInput] = useState("960");
-
-  const play = () => transport.play();
-  const pause = () => transport.pause();
-  const stop = () => transport.stop();
-  const setBpm = () => transport.setBpm(new BPM(Number.parseInt(bpmInput, 10)));
-  const setPpq = () => transport.setPpq(new PPQ(Number.parseInt(ppqInput, 10)));
-
-  useAnimationFrame(() => {
-    const f = async () => {
-      const playingState = await transport.getPlayingState();
-      setPlayingState(playingState);
-      const currentTicks = await transport.getCurrentTicks();
-      setCurrentTicks(currentTicks);
-      const currentSeconds = await transport.getCurrentSeconds();
-      setCurrentSeconds(currentSeconds);
-      const bpm = await transport.getBpm();
-      setBpm_(bpm);
-      const ppq = await transport.getPpq();
-      setPpq_(ppq);
-    };
-    f();
-  });
-
   return (
     <>
       <h1>MVP</h1>
       <div>
-        <button type="button" onClick={setupSynthNode} disabled={!!synthNode}>
-          Setup Synth Node
-        </button>
-      </div>
-      <div>
-        <button type="button" onClick={play}>
+        <button type="button" onClick={() => transport.play()}>
           Play
         </button>
-      </div>
-      <div>
-        <button type="button" onClick={pause}>
+        <button type="button" onClick={() => transport.pause()}>
           Pause
         </button>
-      </div>
-      <div>
-        <button type="button" onClick={stop}>
+        <button type="button" onClick={() => transport.stop()}>
           Stop
         </button>
       </div>
-      <div>
-        <button type="button" onClick={setBpm}>
-          setBpm
-        </button>
-        <input
-          type="number"
-          min="1"
-          max="999"
-          step="1"
-          value={bpmInput}
-          onChange={(event) => setBpmInput(event.target.value)}
-        />
-      </div>
-      <div>
-        <button type="button" onClick={setPpq}>
-          setPpq
-        </button>
-        <input
-          type="number"
-          min="1"
-          max="9999"
-          step="1"
-          value={ppqInput}
-          onChange={(event) => setPpqInput(event.target.value)}
-        />
-      </div>
-      <div>playingState: {playingState}</div>
-      <div>currentTicks: {currentTicks?.value}</div>
-      <div>currentSeconds: {currentSeconds?.value}</div>
-      <div>bpm: {bpm?.value}</div>
-      <div>ppq: {ppq?.value}</div>
     </>
   );
 }
