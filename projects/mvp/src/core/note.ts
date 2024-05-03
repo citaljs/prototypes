@@ -1,7 +1,7 @@
 export class Note {
   constructor(
-    public startTicks: number,
-    public endTicks: number,
+    public ticks: number,
+    public durationTicks: number,
     public pitch: number,
     public velocity: number,
   ) {}
@@ -23,8 +23,6 @@ export class NoteStore {
   }
 
   getNotes(): Note[] {
-    console.debug("Getting notes: %o", this.notes);
-
     return this.notes;
   }
 }

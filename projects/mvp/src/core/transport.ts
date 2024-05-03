@@ -4,12 +4,16 @@ type TransportEvent = "play" | "pause" | "stop" | "positionChanged";
 export class Transport {
   private state: TransportState = "stopped";
   private currentTicks = 0;
+  private currentSeconds = 0;
+  private previousTime = 0;
   private bpm = 120;
   private ppq = 480;
   private timerId: number | null = null;
+  private readonly intervalTime: number = 50;
   private listeners: Partial<
     Record<TransportEvent, Array<(currentTicks: number) => void>>
   > = {};
+  private debug__nextCurrentTicks = 0;
 
   constructor(bpm = 120, ppq = 480) {
     this.bpm = bpm;
@@ -42,6 +46,8 @@ export class Transport {
 
       this.state = "stopped";
       this.currentTicks = 0;
+      this.currentSeconds = 0;
+      this.debug__nextCurrentTicks = 0;
       this.stopTimer();
       this.notifyListeners("stop");
       this.notifyListeners("positionChanged");
@@ -66,17 +72,28 @@ export class Transport {
   }
 
   private startTimer() {
-    const ticksPerMinute = this.bpm * this.ppq;
-    const interval = 60000 / ticksPerMinute;
-
+    this.previousTime = performance.now();
     this.timerId = window.setInterval(() => {
-      if (this.currentTicks % this.ppq === 0) {
-        console.debug(this.currentTicks);
-      }
+      const timestamp = performance.now();
 
-      this.currentTicks += 1;
+      const deltaTime = timestamp - this.previousTime;
+      const deltaTicks = Math.max(
+        0,
+        Math.round((deltaTime / 60000) * this.bpm * this.ppq),
+      );
+
+      this.currentTicks += deltaTicks;
+      this.currentSeconds += deltaTime / 1000;
+
       this.notifyListeners("positionChanged");
-    }, interval);
+
+      this.previousTime = timestamp;
+
+      if (this.currentTicks >= this.debug__nextCurrentTicks) {
+        console.debug("Current ticks: ", this.currentTicks);
+        this.debug__nextCurrentTicks += 480;
+      }
+    }, this.intervalTime);
   }
 
   private stopTimer() {

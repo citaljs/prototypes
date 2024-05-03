@@ -7,7 +7,6 @@ export interface NoteObserver {
 
 export class Scheduler {
   private observers: NoteObserver[] = [];
-  private queue: Array<{ note: Note; ticks: number }> = [];
   private lookahead = 200;
   private lastScheduledTicks = 0;
 
@@ -15,23 +14,13 @@ export class Scheduler {
     transport: Transport,
     private noteStore: NoteStore,
   ) {
-    transport.on("pause", () => {
-      this.clearQueue();
-    });
-
     transport.on("stop", () => {
-      this.clearQueue();
       this.resetLastScheduledTime();
     });
 
     transport.on("positionChanged", (currentTicks) => {
       this.scheduleNotes(currentTicks);
-      this.processQueue(currentTicks);
     });
-  }
-
-  clearQueue() {
-    this.queue = [];
   }
 
   private resetLastScheduledTime() {
@@ -57,32 +46,27 @@ export class Scheduler {
   }
 
   private scheduleNotes(currentTicks: number) {
-    if (currentTicks >= this.lastScheduledTicks + this.lookahead) {
-      const notesToSchedule = this.noteStore
-        .getNotes()
-        .filter(
-          (note) =>
-            note.startTicks >= currentTicks &&
-            note.startTicks < currentTicks + this.lookahead,
-        );
+    const notesToSchedule = this.noteStore
+      .getNotes()
+      .filter(
+        (note) =>
+          note.ticks >= this.lastScheduledTicks &&
+          note.ticks < currentTicks + this.lookahead,
+      );
 
-      for (const note of notesToSchedule) {
-        this.queue.push({ note, ticks: note.startTicks });
-      }
+    this.lastScheduledTicks = currentTicks + this.lookahead;
 
-      this.queue.sort((a, b) => a.ticks - b.ticks);
-      this.lastScheduledTicks = currentTicks;
-
-      console.debug("Scheduled notes: %o", notesToSchedule);
-      console.debug("Current queue:", [...this.queue]);
+    if (notesToSchedule.length === 0) {
+      return;
     }
-  }
 
-  private processQueue(currentTicks: number) {
-    while (this.queue.length > 0 && this.queue[0].ticks <= currentTicks) {
-      const event = this.queue.shift();
-      if (event) {
-        this.notifyObservers(event.note);
+    notesToSchedule.sort((a, b) => a.ticks - b.ticks);
+    console.debug("Scheduled notes: %o", notesToSchedule);
+
+    while (notesToSchedule.length > 0) {
+      const note = notesToSchedule.shift();
+      if (note) {
+        this.notifyObservers(note);
       }
     }
   }
