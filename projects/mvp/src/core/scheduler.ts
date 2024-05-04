@@ -26,8 +26,10 @@ export class Scheduler {
       this.notifyStop();
     });
 
-    transport.on("positionChanged", (currentTicks) => {
-      this.scheduleNotes(currentTicks);
+    transport.on("positionChanged", (currentTicks, transportState) => {
+      if (transportState === "playing") {
+        this.scheduleNotes(currentTicks);
+      }
     });
   }
 
