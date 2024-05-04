@@ -1,9 +1,18 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Engine } from "./core/engine";
 import { addTwinkleNotes } from "./core/utils";
+import { Transport } from "./ui/transport";
 
 function App() {
   const [engine, setEngine] = useState<Engine>();
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current && engine) {
+      new Transport(containerRef.current, engine);
+    }
+  }, [engine]);
 
   const setup = () => {
     const engine = new Engine();
@@ -20,17 +29,7 @@ function App() {
           Setup
         </button>
       </div>
-      <div>
-        <button type="button" onClick={() => engine?.play()}>
-          Play
-        </button>
-        <button type="button" onClick={() => engine?.pause()}>
-          Pause
-        </button>
-        <button type="button" onClick={() => engine?.stop()}>
-          Stop
-        </button>
-      </div>
+      <div ref={containerRef} />
     </>
   );
 }
