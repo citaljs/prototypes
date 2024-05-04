@@ -1,16 +1,15 @@
 import { useState } from "react";
-import { Note, NoteStore } from "./core/note";
+import { NoteStore } from "./core/note";
 import { Scheduler } from "./core/scheduler";
 import { SineSynthesizer } from "./core/synthesizer";
 import { Transport } from "./core/transport";
-import { randomId } from "./core/utils";
+import { addTwinkleNotes } from "./core/utils";
 
 const transport = new Transport(120, 480);
 const noteStore = new NoteStore();
 const scheduler = new Scheduler(transport, noteStore);
 
-noteStore.addNote(new Note(randomId(), 480, 480, 60, 100));
-noteStore.addNote(new Note(randomId(), 960, 240, 64, 100));
+addTwinkleNotes(noteStore);
 
 function App() {
   const [ready, setReady] = useState(false);
