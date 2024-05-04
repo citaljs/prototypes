@@ -21,32 +21,31 @@ export class SineSynthesizer implements SchedulerObserver {
     this.clearAllOscillators();
   }
 
-  noteOn(noteOn: NoteOn) {
+  noteOn(noteOn: NoteOn, delayTime = 0) {
+    const startTime = this.audioContext.currentTime + delayTime;
     const oscillator = this.audioContext.createOscillator();
     oscillator.type = "sine";
     oscillator.frequency.setValueAtTime(
       this.midiToFrequency(noteOn.pitch),
-      this.audioContext.currentTime,
+      startTime,
     );
     const gainNode = this.audioContext.createGain();
-    gainNode.gain.setValueAtTime(
-      noteOn.velocity / 127,
-      this.audioContext.currentTime,
-    );
+    gainNode.gain.setValueAtTime(noteOn.velocity / 127, startTime);
 
     oscillator.connect(gainNode);
     gainNode.connect(this.audioContext.destination);
-    oscillator.start();
+    oscillator.start(startTime);
 
     this.oscillators.set(noteOn.noteId, oscillator);
 
     console.debug("Setting up oscillator for note on: %o", noteOn);
   }
 
-  noteOff(noteOff: NoteOff) {
+  noteOff(noteOff: NoteOff, delayTime = 0) {
     const oscillator = this.oscillators.get(noteOff.noteId);
     if (oscillator) {
-      oscillator.stop();
+      const stopTime = this.audioContext.currentTime + delayTime;
+      oscillator.stop(stopTime);
       this.oscillators.delete(noteOff.noteId);
 
       console.debug("Tearing down oscillator for note off: %o", noteOff);

@@ -4,8 +4,8 @@ import type { Transport } from "./transport";
 export interface SchedulerObserver {
   pause(): void;
   stop(): void;
-  noteOn(noteOn: NoteOn): void;
-  noteOff(noteOff: NoteOff): void;
+  noteOn(noteOn: NoteOn, delayTime: number): void;
+  noteOff(noteOff: NoteOff, delayTime: number): void;
 }
 
 export class Scheduler {
@@ -26,11 +26,14 @@ export class Scheduler {
       this.notifyStop();
     });
 
-    transport.on("positionChanged", (currentTicks, transportState) => {
-      if (transportState === "playing") {
-        this.scheduleNotes(currentTicks);
-      }
-    });
+    transport.on(
+      "positionChanged",
+      (currentTicks, bpm, ppq, transportState) => {
+        if (transportState === "playing") {
+          this.scheduleNotes(currentTicks, bpm, ppq);
+        }
+      },
+    );
   }
 
   private resetLastScheduledTime() {
@@ -61,19 +64,19 @@ export class Scheduler {
     }
   }
 
-  private notifyNoteOn(noteOn: NoteOn) {
+  private notifyNoteOn(noteOn: NoteOn, delayTime = 0) {
     for (const observer of this.observers) {
-      observer.noteOn(noteOn);
+      observer.noteOn(noteOn, delayTime);
     }
   }
 
-  private notifyNoteOff(noteOff: NoteOff) {
+  private notifyNoteOff(noteOff: NoteOff, delayTime = 0) {
     for (const observer of this.observers) {
-      observer.noteOff(noteOff);
+      observer.noteOff(noteOff, delayTime);
     }
   }
 
-  private scheduleNotes(currentTicks: number) {
+  private scheduleNotes(currentTicks: number, bpm: number, ppq: number) {
     const scheduledNoteOnEvents = this.noteStore
       .getNotes()
       .filter(
@@ -92,7 +95,8 @@ export class Scheduler {
     while (scheduledNoteOnEvents.length > 0) {
       const noteOn = scheduledNoteOnEvents.shift();
       if (noteOn) {
-        this.notifyNoteOn(noteOn);
+        const delayTime = (noteOn.ticks - currentTicks) / ppq / (bpm / 60);
+        this.notifyNoteOn(noteOn, delayTime);
       }
     }
 
@@ -111,7 +115,8 @@ export class Scheduler {
     while (scheduledNoteOffEvents.length > 0) {
       const noteOff = scheduledNoteOffEvents.shift();
       if (noteOff) {
-        this.notifyNoteOff(noteOff);
+        const delayTime = (noteOff.ticks - currentTicks) / ppq / (bpm / 60);
+        this.notifyNoteOff(noteOff, delayTime);
       }
     }
 

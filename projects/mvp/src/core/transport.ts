@@ -13,7 +13,14 @@ export class Transport {
   private listeners: Partial<
     Record<
       TransportEvent,
-      Array<(currentTicks: number, state: TransportState) => void>
+      Array<
+        (
+          currentTicks: number,
+          bpm: number,
+          ppq: number,
+          state: TransportState,
+        ) => void
+      >
     >
   > = {};
   private debug__nextCurrentTicks = 0;
@@ -63,13 +70,18 @@ export class Transport {
     }
 
     for (const listener of this.listeners[event]) {
-      listener(this.currentTicks, this.state);
+      listener(this.currentTicks, this.bpm, this.ppq, this.state);
     }
   }
 
   on(
     event: TransportEvent,
-    listener: (currentTicks: number, state: TransportState) => void,
+    listener: (
+      currentTicks: number,
+      bpm: number,
+      ppq: number,
+      state: TransportState,
+    ) => void,
   ) {
     if (!this.listeners[event]) {
       this.listeners[event] = [];
