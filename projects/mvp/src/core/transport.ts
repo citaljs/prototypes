@@ -1,5 +1,15 @@
 type TransportState = "playing" | "paused" | "stopped";
-type TransportEvent = "play" | "pause" | "stop" | "positionChanged";
+type TransportEvent = "play" | "pause" | "stop" | "positionChanged" | "loop";
+
+interface TicksRange {
+  start: number;
+  end: number;
+}
+
+export interface Loop {
+  enabled: boolean;
+  range: TicksRange;
+}
 
 export class Transport {
   private state: TransportState = "stopped";
@@ -8,6 +18,13 @@ export class Transport {
   private previousTime = 0;
   private bpm = 120;
   private ppq = 480;
+  private loop: Loop = {
+    enabled: false,
+    range: {
+      start: 0,
+      end: 480 * 4,
+    },
+  };
   private timerId: number | null = null;
   private readonly intervalTime: number = 50;
   private listeners: Partial<
@@ -19,6 +36,7 @@ export class Transport {
           bpm: number,
           ppq: number,
           state: TransportState,
+          loop: Loop,
         ) => void
       >
     >
@@ -64,13 +82,21 @@ export class Transport {
     }
   }
 
+  toggleLoop() {
+    this.loop.enabled = !this.loop.enabled;
+  }
+
+  setLoopRange(range: TicksRange) {
+    this.loop.range = range;
+  }
+
   private notifyListeners(event: TransportEvent) {
     if (!this.listeners[event]) {
       return;
     }
 
     for (const listener of this.listeners[event]) {
-      listener(this.currentTicks, this.bpm, this.ppq, this.state);
+      listener(this.currentTicks, this.bpm, this.ppq, this.state, this.loop);
     }
   }
 
@@ -81,6 +107,7 @@ export class Transport {
       bpm: number,
       ppq: number,
       state: TransportState,
+      loop: Loop,
     ) => void,
   ) {
     if (!this.listeners[event]) {
@@ -103,13 +130,24 @@ export class Transport {
       this.currentTicks += deltaTicks;
       this.currentSeconds += deltaTime / 1000;
 
+      if (this.loop.enabled && this.currentTicks >= this.loop.range.end) {
+        this.currentTicks = this.loop.range.start;
+        this.currentSeconds = (this.currentTicks / this.ppq) * (60 / this.bpm);
+        this.notifyListeners("loop");
+      }
+
       this.notifyListeners("positionChanged");
 
       this.previousTime = timestamp;
 
       if (this.currentTicks >= this.debug__nextCurrentTicks) {
         console.debug("Current ticks: ", this.currentTicks);
-        this.debug__nextCurrentTicks += 480;
+
+        if (this.loop.enabled && this.currentTicks >= this.loop.range.end) {
+          this.debug__nextCurrentTicks = this.loop.range.start;
+        } else {
+          this.debug__nextCurrentTicks += 480;
+        }
       }
     }, this.intervalTime);
   }

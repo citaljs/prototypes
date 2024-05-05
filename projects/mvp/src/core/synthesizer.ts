@@ -21,6 +21,10 @@ export class SineSynthesizer implements SchedulerObserver {
     this.clearAllOscillators();
   }
 
+  loop() {
+    this.clearAllOscillators();
+  }
+
   noteOn(noteOn: NoteOn, delayTime = 0) {
     const startTime = this.audioContext.currentTime + delayTime;
     const oscillator = this.audioContext.createOscillator();

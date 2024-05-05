@@ -1,9 +1,10 @@
 import { NoteOff, NoteOn, type NoteStore } from "./note";
-import type { Transport } from "./transport";
+import type { Loop, Transport } from "./transport";
 
 export interface SchedulerObserver {
   pause(): void;
   stop(): void;
+  loop(): void;
   noteOn(noteOn: NoteOn, delayTime: number): void;
   noteOff(noteOff: NoteOff, delayTime: number): void;
 }
@@ -26,11 +27,16 @@ export class Scheduler {
       this.notifyStop();
     });
 
+    transport.on("loop", (_, __, ___, ____, loop) => {
+      this.lastScheduledTicks = loop.range.start;
+      this.notifyLoop();
+    });
+
     transport.on(
       "positionChanged",
-      (currentTicks, bpm, ppq, transportState) => {
+      (currentTicks, bpm, ppq, transportState, loop) => {
         if (transportState === "playing") {
-          this.scheduleNotes(currentTicks, bpm, ppq);
+          this.scheduleNotes(currentTicks, bpm, ppq, loop);
         }
       },
     );
@@ -64,6 +70,12 @@ export class Scheduler {
     }
   }
 
+  private notifyLoop() {
+    for (const observer of this.observers) {
+      observer.loop();
+    }
+  }
+
   private notifyNoteOn(noteOn: NoteOn, delayTime = 0) {
     for (const observer of this.observers) {
       observer.noteOn(noteOn, delayTime);
@@ -76,13 +88,21 @@ export class Scheduler {
     }
   }
 
-  private scheduleNotes(currentTicks: number, bpm: number, ppq: number) {
+  private scheduleNotes(
+    currentTicks: number,
+    bpm: number,
+    ppq: number,
+    loop: Loop,
+  ) {
     const scheduledNoteOnEvents = this.noteStore
       .getNotes()
       .filter(
         (note) =>
           note.startTicks >= this.lastScheduledTicks &&
-          note.startTicks < currentTicks + this.lookahead,
+          note.startTicks <
+            (loop.enabled
+              ? Math.min(currentTicks + this.lookahead, loop.range.end)
+              : currentTicks + this.lookahead),
       )
       .map(
         (note) =>
@@ -105,7 +125,10 @@ export class Scheduler {
       .filter(
         (note) =>
           note.endTicks >= this.lastScheduledTicks &&
-          note.endTicks < currentTicks + this.lookahead,
+          note.startTicks <
+            (loop.enabled
+              ? Math.min(currentTicks + this.lookahead, loop.range.end)
+              : currentTicks + this.lookahead),
       )
       .map((note) => new NoteOff(note.id, note.endTicks));
 
