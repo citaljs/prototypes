@@ -15,7 +15,7 @@ export class Transport {
   private state: TransportState = "stopped";
   private currentTicks = 0;
   private currentSeconds = 0;
-  private previousTime = 0;
+  private previousTime?: number = undefined;
   private bpm = 120;
   private ppq = 480;
   private loop: Loop = {
@@ -117,39 +117,47 @@ export class Transport {
   }
 
   private startTimer() {
-    this.previousTime = performance.now();
-    this.timerId = window.setInterval(() => {
-      const timestamp = performance.now();
+    this.previousTime = undefined;
+    this.timerId = window.setInterval(
+      () => this.updateTimer(),
+      this.intervalTime,
+    );
+  }
 
-      const deltaTime = timestamp - this.previousTime;
-      const deltaTicks = Math.max(
-        0,
-        Math.round((deltaTime / 60000) * this.bpm * this.ppq),
-      );
+  private updateTimer() {
+    const timestamp = performance.now();
+    if (this.previousTime === undefined) {
+      this.previousTime = timestamp;
+    }
 
-      this.currentTicks += deltaTicks;
-      this.currentSeconds += deltaTime / 1000;
+    const deltaTime = timestamp - this.previousTime;
+    const deltaTicks = Math.max(
+      0,
+      Math.round((deltaTime / 60000) * this.bpm * this.ppq),
+    );
+
+    this.currentTicks += deltaTicks;
+    this.currentSeconds += deltaTime / 1000;
+
+    if (this.loop.enabled && this.currentTicks >= this.loop.range.end) {
+      this.currentTicks = this.loop.range.start;
+      this.currentSeconds = (this.currentTicks / this.ppq) * (60 / this.bpm);
+      this.notifyListeners("loop");
+    }
+
+    this.notifyListeners("positionChanged");
+
+    this.previousTime = timestamp;
+
+    if (this.currentTicks >= this.debug__nextCurrentTicks) {
+      console.debug("Current ticks: ", this.currentTicks);
 
       if (this.loop.enabled && this.currentTicks >= this.loop.range.end) {
-        this.currentTicks = this.loop.range.start;
-        this.currentSeconds = (this.currentTicks / this.ppq) * (60 / this.bpm);
-        this.notifyListeners("loop");
+        this.debug__nextCurrentTicks = this.loop.range.start;
+      } else {
+        this.debug__nextCurrentTicks += 480;
       }
-
-      this.notifyListeners("positionChanged");
-
-      this.previousTime = timestamp;
-
-      if (this.currentTicks >= this.debug__nextCurrentTicks) {
-        console.debug("Current ticks: ", this.currentTicks);
-
-        if (this.loop.enabled && this.currentTicks >= this.loop.range.end) {
-          this.debug__nextCurrentTicks = this.loop.range.start;
-        } else {
-          this.debug__nextCurrentTicks += 480;
-        }
-      }
-    }, this.intervalTime);
+    }
   }
 
   private stopTimer() {
