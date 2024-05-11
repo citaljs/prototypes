@@ -1,22 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import { Engine } from "./core/engine";
+import { SamplerSynthesizer } from "./core/synthesizer";
 import { addTwinkleNotes } from "./core/utils";
 import "./ui/styles.css";
 import { Transport } from "./ui/transport";
+
+const synthesizer = new SamplerSynthesizer(new AudioContext());
 
 function App() {
   const [engine, setEngine] = useState<Engine>();
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const synthContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (containerRef.current && engine) {
       new Transport(containerRef.current, engine);
     }
+
+    if (synthContainerRef.current && engine) {
+      synthesizer.gui.create(synthContainerRef.current);
+    }
   }, [engine]);
 
   const setup = () => {
-    const engine = new Engine();
+    const engine = new Engine(synthesizer);
     const store = engine.getStore();
     addTwinkleNotes(store);
     setEngine(engine);
@@ -31,6 +39,7 @@ function App() {
         </button>
       </div>
       <div ref={containerRef} />
+      <div ref={synthContainerRef} />
     </>
   );
 }

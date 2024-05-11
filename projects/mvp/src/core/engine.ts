@@ -1,20 +1,20 @@
 import { NoteStore } from "./note";
-import { Scheduler, type SchedulerObserver } from "./scheduler";
-import { SineSynthesizer } from "./synthesizer";
+import { Scheduler } from "./scheduler";
+import { type Synthesizer, SynthesizerSchedulerAdapter } from "./synthesizer";
 import { Transport } from "./transport";
 
 export class Engine {
   private transport: Transport;
   private scheduler: Scheduler;
-  private synthesizer: SchedulerObserver;
   private store: NoteStore;
 
-  constructor() {
+  constructor(private synthesizer: Synthesizer) {
     this.transport = new Transport(120, 480);
     this.store = new NoteStore();
     this.scheduler = new Scheduler(this.transport, this.store);
-    this.synthesizer = new SineSynthesizer(new AudioContext());
-    this.scheduler.addObserver(this.synthesizer);
+    this.scheduler.addObserver(
+      new SynthesizerSchedulerAdapter(this.synthesizer),
+    );
   }
 
   play() {

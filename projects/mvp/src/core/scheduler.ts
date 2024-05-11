@@ -2,11 +2,11 @@ import { NoteOff, NoteOn, type NoteStore } from "./note";
 import type { Loop, Transport } from "./transport";
 
 export interface SchedulerObserver {
-  pause(): void;
-  stop(): void;
-  loop(): void;
-  noteOn(noteOn: NoteOn, delayTime: number): void;
-  noteOff(noteOff: NoteOff, delayTime: number): void;
+  playNote(noteOn: NoteOn, delayTime: number): void;
+  stopNote(noteOff: NoteOff, delayTime: number): void;
+  onPause(): void;
+  onStop(): void;
+  onLoop(): void;
 }
 
 export class Scheduler {
@@ -60,31 +60,31 @@ export class Scheduler {
 
   private notifyPause() {
     for (const observer of this.observers) {
-      observer.pause();
+      observer.onPause();
     }
   }
 
   private notifyStop() {
     for (const observer of this.observers) {
-      observer.stop();
+      observer.onStop();
     }
   }
 
   private notifyLoop() {
     for (const observer of this.observers) {
-      observer.loop();
+      observer.onLoop();
     }
   }
 
   private notifyNoteOn(noteOn: NoteOn, delayTime = 0) {
     for (const observer of this.observers) {
-      observer.noteOn(noteOn, delayTime);
+      observer.playNote(noteOn, delayTime);
     }
   }
 
   private notifyNoteOff(noteOff: NoteOff, delayTime = 0) {
     for (const observer of this.observers) {
-      observer.noteOff(noteOff, delayTime);
+      observer.stopNote(noteOff, delayTime);
     }
   }
 
@@ -115,7 +115,10 @@ export class Scheduler {
     while (scheduledNoteOnEvents.length > 0) {
       const noteOn = scheduledNoteOnEvents.shift();
       if (noteOn) {
-        const delayTime = (noteOn.ticks - currentTicks) / ppq / (bpm / 60);
+        const delayTime = Math.max(
+          0,
+          (noteOn.ticks - currentTicks) / ppq / (bpm / 60),
+        );
         this.notifyNoteOn(noteOn, delayTime);
       }
     }
@@ -138,7 +141,10 @@ export class Scheduler {
     while (scheduledNoteOffEvents.length > 0) {
       const noteOff = scheduledNoteOffEvents.shift();
       if (noteOff) {
-        const delayTime = (noteOff.ticks - currentTicks) / ppq / (bpm / 60);
+        const delayTime = Math.max(
+          0,
+          (noteOff.ticks - currentTicks) / ppq / (bpm / 60),
+        );
         this.notifyNoteOff(noteOff, delayTime);
       }
     }
