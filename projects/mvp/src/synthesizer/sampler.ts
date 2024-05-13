@@ -26,20 +26,18 @@ class SamplerProcessor implements SynthesizerProcessor {
     }
   }
 
-  stopNote(): void {}
+  stopNote() {}
 
-  onStop(): void {
+  onStop() {
     if (this.sourceNode) {
       this.sourceNode.stop();
       this.sourceNode.disconnect();
     }
   }
 
-  onPause(): void {
+  onPause() {
     this.onStop();
   }
-
-  onLoop(): void {}
 
   setParameter(
     id: SamplerParameterId,

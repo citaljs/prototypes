@@ -23,8 +23,4 @@ export class SynthesizerSchedulerAdapter implements SchedulerObserver {
       delayTime,
     );
   }
-
-  onPause() {}
-  onStop() {}
-  onLoop() {}
 }

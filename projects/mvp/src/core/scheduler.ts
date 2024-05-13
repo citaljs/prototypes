@@ -2,11 +2,11 @@ import { NoteOff, NoteOn, type NoteStore } from "./note";
 import type { Loop, Transport } from "./transport";
 
 export interface SchedulerObserver {
-  playNote(noteOn: NoteOn, delayTime: number): void;
-  stopNote(noteOff: NoteOff, delayTime: number): void;
-  onPause(): void;
-  onStop(): void;
-  onLoop(): void;
+  playNote?(noteOn: NoteOn, delayTime: number): void;
+  stopNote?(noteOff: NoteOff, delayTime: number): void;
+  onPause?(): void;
+  onStop?(): void;
+  onLoop?(): void;
 }
 
 export class Scheduler {
@@ -60,31 +60,31 @@ export class Scheduler {
 
   private notifyPause() {
     for (const observer of this.observers) {
-      observer.onPause();
+      observer.onPause?.();
     }
   }
 
   private notifyStop() {
     for (const observer of this.observers) {
-      observer.onStop();
+      observer.onStop?.();
     }
   }
 
   private notifyLoop() {
     for (const observer of this.observers) {
-      observer.onLoop();
+      observer.onLoop?.();
     }
   }
 
   private notifyNoteOn(noteOn: NoteOn, delayTime = 0) {
     for (const observer of this.observers) {
-      observer.playNote(noteOn, delayTime);
+      observer.playNote?.(noteOn, delayTime);
     }
   }
 
   private notifyNoteOff(noteOff: NoteOff, delayTime = 0) {
     for (const observer of this.observers) {
-      observer.stopNote(noteOff, delayTime);
+      observer.stopNote?.(noteOff, delayTime);
     }
   }
 
