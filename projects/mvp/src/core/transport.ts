@@ -11,6 +11,14 @@ export interface Loop {
   range: TicksRange;
 }
 
+interface TransportListenerArgs {
+  currentTicks: number;
+  bpm: number;
+  ppq: number;
+  state: TransportState;
+  loop: Loop;
+}
+
 export class Transport {
   private state: TransportState = "stopped";
   private currentTicks = 0;
@@ -28,18 +36,7 @@ export class Transport {
   private timerId: number | null = null;
   private readonly intervalTime: number = 50;
   private listeners: Partial<
-    Record<
-      TransportEvent,
-      Array<
-        (
-          currentTicks: number,
-          bpm: number,
-          ppq: number,
-          state: TransportState,
-          loop: Loop,
-        ) => void
-      >
-    >
+    Record<TransportEvent, Array<(args: TransportListenerArgs) => void>>
   > = {};
   private debug__nextCurrentTicks = 0;
 
@@ -96,20 +93,17 @@ export class Transport {
     }
 
     for (const listener of this.listeners[event]) {
-      listener(this.currentTicks, this.bpm, this.ppq, this.state, this.loop);
+      listener({
+        currentTicks: this.currentTicks,
+        bpm: this.bpm,
+        ppq: this.ppq,
+        state: this.state,
+        loop: this.loop,
+      });
     }
   }
 
-  on(
-    event: TransportEvent,
-    listener: (
-      currentTicks: number,
-      bpm: number,
-      ppq: number,
-      state: TransportState,
-      loop: Loop,
-    ) => void,
-  ) {
+  on(event: TransportEvent, listener: (args: TransportListenerArgs) => void) {
     if (!this.listeners[event]) {
       this.listeners[event] = [];
     }

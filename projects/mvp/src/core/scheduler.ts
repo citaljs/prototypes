@@ -27,15 +27,15 @@ export class Scheduler {
       this.notifyStop();
     });
 
-    transport.on("loop", (_, __, ___, ____, loop) => {
+    transport.on("loop", ({ loop }) => {
       this.lastScheduledTicks = loop.range.start;
       this.notifyLoop();
     });
 
     transport.on(
       "positionChanged",
-      (currentTicks, bpm, ppq, transportState, loop) => {
-        if (transportState === "playing") {
+      ({ currentTicks, bpm, ppq, state, loop }) => {
+        if (state === "playing") {
           this.scheduleNotes(currentTicks, bpm, ppq, loop);
         }
       },
