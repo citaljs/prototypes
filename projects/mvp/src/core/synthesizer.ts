@@ -3,9 +3,24 @@ import {
   NoteOffImmediate,
   type NoteOn,
   NoteOnImmediate,
-} from "../core/note";
-import type { SchedulerObserver } from "../core/scheduler";
-import type { Synthesizer } from "./base";
+} from "./note";
+import type { SchedulerObserver } from "./scheduler";
+
+export interface SynthesizerProcessor {
+  setParameter(id: string, value: unknown): void;
+  getParameter(id: string): unknown;
+  playNote(noteOn: NoteOnImmediate, delayTime: number): void;
+  stopNote(noteOff: NoteOffImmediate, delayTime: number): void;
+}
+
+export interface SynthesizerGui {
+  create(container: HTMLElement): void;
+}
+
+export interface Synthesizer {
+  processor: SynthesizerProcessor;
+  gui: SynthesizerGui;
+}
 
 export class SynthesizerSchedulerAdapter implements SchedulerObserver {
   constructor(private synthesizer: Synthesizer) {}

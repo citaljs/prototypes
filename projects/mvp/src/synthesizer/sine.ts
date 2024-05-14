@@ -1,5 +1,9 @@
 import type { NoteOffImmediate, NoteOnImmediate } from "../core/note";
-import type { Synthesizer, SynthesizerGUI, SynthesizerProcessor } from "./base";
+import type {
+  Synthesizer,
+  SynthesizerGui,
+  SynthesizerProcessor,
+} from "../core/synthesizer";
 
 class SineSynthesizerProcessor implements SynthesizerProcessor {
   private audioContext: AudioContext;
@@ -69,7 +73,7 @@ class SineSynthesizerProcessor implements SynthesizerProcessor {
   }
 }
 
-class SineSynthesizerGUI implements SynthesizerGUI {
+class SineSynthesizerGUI implements SynthesizerGui {
   constructor(private processor: SineSynthesizerProcessor) {}
 
   create(container: HTMLElement) {

@@ -1,5 +1,9 @@
 import type { NoteOn } from "../core/note";
-import type { Synthesizer, SynthesizerGUI, SynthesizerProcessor } from "./base";
+import type {
+  Synthesizer,
+  SynthesizerGui,
+  SynthesizerProcessor,
+} from "../core/synthesizer";
 
 interface SamplerParameters {
   sampleFile?: File;
@@ -66,7 +70,7 @@ class SamplerProcessor implements SynthesizerProcessor {
   }
 }
 
-class SamplerGUI implements SynthesizerGUI {
+class SamplerGui implements SynthesizerGui {
   constructor(private processor: SamplerProcessor) {}
 
   create(container: HTMLElement) {
@@ -100,10 +104,10 @@ class SamplerGUI implements SynthesizerGUI {
 
 export class SamplerSynthesizer implements Synthesizer {
   processor: SamplerProcessor;
-  gui: SamplerGUI;
+  gui: SamplerGui;
 
   constructor(audioContext: AudioContext) {
     this.processor = new SamplerProcessor(audioContext);
-    this.gui = new SamplerGUI(this.processor);
+    this.gui = new SamplerGui(this.processor);
   }
 }
