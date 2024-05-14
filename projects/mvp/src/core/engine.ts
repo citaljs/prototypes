@@ -1,7 +1,7 @@
-import { SynthesizerSchedulerAdapter } from "../synthesizer/adapter";
-import type { Synthesizer } from "../synthesizer/base";
 import { NoteStore } from "./note";
 import { Scheduler } from "./scheduler";
+import { SynthesizerSchedulerAdapter } from "./synthesizer";
+import type { Synthesizer } from "./synthesizer";
 import { Transport } from "./transport";
 
 export class Engine {
