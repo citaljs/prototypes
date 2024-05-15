@@ -73,7 +73,7 @@ class SineSynthesizerProcessor implements SynthesizerProcessor {
   }
 }
 
-class SineSynthesizerGUI implements SynthesizerGui {
+class SineSynthesizerGui implements SynthesizerGui {
   constructor(private processor: SineSynthesizerProcessor) {}
 
   create(container: HTMLElement) {
@@ -96,10 +96,10 @@ class SineSynthesizerGUI implements SynthesizerGui {
 
 export class SineSynthesizer implements Synthesizer {
   processor: SineSynthesizerProcessor;
-  gui: SineSynthesizerGUI;
+  gui: SineSynthesizerGui;
 
   constructor(audioContext: AudioContext) {
     this.processor = new SineSynthesizerProcessor(audioContext);
-    this.gui = new SineSynthesizerGUI(this.processor);
+    this.gui = new SineSynthesizerGui(this.processor);
   }
 }
