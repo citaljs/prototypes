@@ -95,21 +95,17 @@ export class Scheduler {
     loop: Loop,
   ) {
     const scheduledNoteOnEvents = this.noteStore
-      .getNotes()
-      .filter(
-        (note) =>
-          note.startTicks >= this.lastScheduledTicks &&
-          note.startTicks <
-            (loop.enabled
-              ? Math.min(currentTicks + this.lookahead, loop.range.end)
-              : currentTicks + this.lookahead),
-      )
+      .getSortedNotesByStartTicksRange({
+        start: this.lastScheduledTicks,
+        end: loop.enabled
+          ? Math.min(currentTicks + this.lookahead, loop.range.end)
+          : currentTicks + this.lookahead,
+      })
       .map(
         (note) =>
           new NoteOn(note.id, note.startTicks, note.pitch, note.velocity),
       );
 
-    scheduledNoteOnEvents.sort((a, b) => a.ticks - b.ticks);
     console.debug("Scheduled note on events: %o", scheduledNoteOnEvents);
 
     while (scheduledNoteOnEvents.length > 0) {
@@ -124,18 +120,14 @@ export class Scheduler {
     }
 
     const scheduledNoteOffEvents = this.noteStore
-      .getNotes()
-      .filter(
-        (note) =>
-          note.endTicks >= this.lastScheduledTicks &&
-          note.startTicks <
-            (loop.enabled
-              ? Math.min(currentTicks + this.lookahead, loop.range.end)
-              : currentTicks + this.lookahead),
-      )
+      .getSortedNotesByEndTicksRange({
+        start: this.lastScheduledTicks,
+        end: loop.enabled
+          ? Math.min(currentTicks + this.lookahead, loop.range.end)
+          : currentTicks + this.lookahead,
+      })
       .map((note) => new NoteOff(note.id, note.endTicks));
 
-    scheduledNoteOffEvents.sort((a, b) => a.ticks - b.ticks);
     console.debug("Scheduled note off events: %o", scheduledNoteOffEvents);
 
     while (scheduledNoteOffEvents.length > 0) {

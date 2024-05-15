@@ -1,10 +1,7 @@
+import type { TicksRange } from "./utils";
+
 type TransportState = "playing" | "paused" | "stopped";
 type TransportEvent = "play" | "pause" | "stop" | "positionChanged" | "loop";
-
-interface TicksRange {
-  start: number;
-  end: number;
-}
 
 export interface Loop {
   enabled: boolean;

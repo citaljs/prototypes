@@ -1,5 +1,10 @@
 import { Note, type NoteStore } from "./note";
 
+export interface TicksRange {
+  start: number;
+  end: number;
+}
+
 export function randomId() {
   return Math.random().toString(36).slice(2);
 }

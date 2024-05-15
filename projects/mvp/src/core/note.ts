@@ -1,3 +1,5 @@
+import type { TicksRange } from "./utils";
+
 export class Note {
   constructor(
     public id: string,
@@ -57,5 +59,29 @@ export class NoteStore {
 
   getNotes(): Note[] {
     return this.notes;
+  }
+
+  getNotesByStartTicksRange(range: TicksRange): Note[] {
+    return this.notes.filter((note) => {
+      return note.startTicks >= range.start && note.startTicks < range.end;
+    });
+  }
+
+  getSortedNotesByStartTicksRange(range: TicksRange): Note[] {
+    return this.getNotesByStartTicksRange(range).sort(
+      (a, b) => a.startTicks - b.startTicks,
+    );
+  }
+
+  getNotesByEndTicksRange(range: TicksRange): Note[] {
+    return this.notes.filter((note) => {
+      return note.endTicks >= range.start && note.endTicks < range.end;
+    });
+  }
+
+  getSortedNotesByEndTicksRange(range: TicksRange): Note[] {
+    return this.getNotesByEndTicksRange(range).sort(
+      (a, b) => a.endTicks - b.endTicks,
+    );
   }
 }
