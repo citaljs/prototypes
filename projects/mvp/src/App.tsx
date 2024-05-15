@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Engine } from "./core/engine";
 import { addTwinkleNotes } from "./core/utils";
 import { SamplerSynthesizer } from "./synthesizer/sampler";
-import "./ui/styles.css";
 import { Transport } from "./ui/transport";
 
 const synthesizer = new SamplerSynthesizer(new AudioContext());

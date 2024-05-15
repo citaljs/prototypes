@@ -1,4 +1,5 @@
 import type { Engine } from "../core/engine";
+import "./transport.css";
 
 export class Transport {
   private root: HTMLDivElement;
