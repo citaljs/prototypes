@@ -1,51 +1,50 @@
+import van from "vanjs-core";
+
 import type { Engine } from "../core/engine";
 import "./transport.css";
 
-export class Transport {
-  private root: HTMLDivElement;
-  private playButton: HTMLButtonElement;
-  private pauseButton: HTMLButtonElement;
-  private stopButton: HTMLButtonElement;
+const { div, button } = van.tags;
+const { svg, path } = van.tags("http://www.w3.org/2000/svg");
 
-  constructor(
-    private container: HTMLElement,
-    private engine: Engine,
-  ) {
-    this.root = document.createElement("div");
-    this.playButton = document.createElement("button");
-    this.pauseButton = document.createElement("button");
-    this.stopButton = document.createElement("button");
-    this.initialize();
+export class Transport {
+  constructor(container: HTMLElement, engine: Engine) {
+    const dom = this.create(engine);
+    van.add(container, dom);
   }
 
-  initialize() {
-    const fragment = document.createDocumentFragment();
-
-    this.root.classList.add("cital-transport");
-    this.container.appendChild(this.root);
-
-    this.playButton.className = "cital-transport__button cital-transport__play";
-    this.playButton.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M8 5v14l11-7L8 5z" fill="currentColor"/>
-    </svg>`;
-    this.playButton.onclick = () => this.engine.play();
-    fragment.appendChild(this.playButton);
-
-    this.pauseButton.className =
-      "cital-transport__button cital-transport__pause";
-    this.pauseButton.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 6h4v12H6V6zm8 0h4v12h-4V6z" fill="currentColor"/>
-    </svg>`;
-    this.pauseButton.onclick = () => this.engine.pause();
-    fragment.appendChild(this.pauseButton);
-
-    this.stopButton.className = "cital-transport__button cital-transport__stop";
-    this.stopButton.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 6h12v12H6V6z" fill="currentColor"/>
-    </svg>`;
-    this.stopButton.onclick = () => this.engine.stop();
-    fragment.appendChild(this.stopButton);
-
-    this.root.appendChild(fragment);
+  private create(engine: Engine) {
+    return div(
+      { class: "cital-transport" },
+      button(
+        {
+          class: "cital-transport__button cital-transport__play",
+          onclick: () => engine.play(),
+        },
+        svg(
+          { width: "24", height: "24", viewBox: "0 0 24 24", fill: "none" },
+          path({ d: "M8 5v14l11-7L8 5z", fill: "currentColor" }),
+        ),
+      ),
+      button(
+        {
+          class: "cital-transport__button cital-transport__pause",
+          onclick: () => engine.pause(),
+        },
+        svg(
+          { width: "24", height: "24", viewBox: "0 0 24 24", fill: "none" },
+          path({ d: "M6 6h4v12H6V6zm8 0h4v12h-4V6z", fill: "currentColor" }),
+        ),
+      ),
+      button(
+        {
+          class: "cital-transport__button cital-transport__stop",
+          onclick: () => engine.stop(),
+        },
+        svg(
+          { width: "24", height: "24", viewBox: "0 0 24 24", fill: "none" },
+          path({ d: "M6 6h12v12H6V6z", fill: "currentColor" }),
+        ),
+      ),
+    );
   }
 }
